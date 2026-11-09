@@ -1,0 +1,218 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CorelDRAW Arena 3D: Misi Desainer Muda</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3fb;--pn:#fff;--tx:#1b2233;--ac:#1a9e4b;--bd:#d3dbea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1424;--pn:#192138;--tx:#eef2ff;--bd:#2b3654}}
+:root[data-theme=dark]{--bg:#0e1424;--pn:#192138;--tx:#eef2ff;--bd:#2b3654}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font-family:Nunito,system-ui,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;gap:6px;align-items:center;padding:8px;z-index:3;flex-wrap:wrap}
+#hud span,#hud button{background:var(--pn);color:var(--tx);padding:6px 10px;border-radius:12px;font:800 14px Nunito,system-ui,sans-serif;border:1px solid var(--bd)}
+#hud button{cursor:pointer;min-width:40px;min-height:40px}.sp{flex:1;background:none!important;border:0!important}
+#ov,#pop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,15,30,.55);padding:10px;z-index:5}#pop{z-index:9}
+.pn{background:var(--pn);border:2px solid var(--bd);border-radius:18px;padding:16px;max-width:640px;width:100%;max-height:92%;overflow:auto;box-shadow:0 10px 40px #0005;box-sizing:border-box}
+.op,.bt{display:block;width:100%;margin:7px 0;padding:12px;border-radius:12px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);font:700 15px Nunito,system-ui,sans-serif;text-align:left;cursor:pointer;min-height:48px;box-sizing:border-box}
+.bt{background:var(--ac);color:#fff;border:0;text-align:center}.ok{background:#2e7d32!important;color:#fff!important}.no{opacity:.35}
+.hd{font-size:13px;opacity:.7;font-weight:800;display:flex;justify-content:space-between}.q{font-size:18px;font-weight:800;margin:8px 0}
+#fb{margin:8px 0;padding:8px;border-radius:10px;font-size:14px}#fb:empty{display:none}.f1{background:#2e7d3233}.f0{background:#e5393533}
+svg{width:100%;max-height:48vh;border-radius:10px;border:1px solid var(--bd);background:#fff}svg [data-k]{cursor:pointer}svg [data-k]:hover{opacity:.7}svg text{pointer-events:none}
+.sw i{display:inline-block;width:38px;height:26px;border-radius:6px;margin-right:6px;border:1px solid #0003}
+#act{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:4;display:none;padding:12px 20px;border-radius:30px;border:0;background:var(--ac);color:#fff;font:800 16px Nunito,system-ui,sans-serif;cursor:pointer}
+#joy{position:fixed;left:18px;bottom:28px;width:110px;height:110px;border-radius:50%;background:#0003;border:2px solid #fff6;touch-action:none;z-index:4}
+#joy i{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:#fffc}
+@media(hover:hover) and (pointer:fine){#joy{display:none}}
+#ts{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:20px;z-index:8;display:none;font-weight:700;text-align:center;max-width:90%}
+.pt{position:fixed;z-index:20;pointer-events:none;animation:pt .9s ease-out forwards;font-size:22px}@keyframes pt{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.pk{min-height:40px;padding:6px;border:2px dashed var(--bd);border-radius:10px;margin:6px 0}.bar{height:14px;border-radius:8px;background:var(--bd);overflow:hidden}.bar b{display:block;height:100%;background:var(--ac)}
+select{width:100%;padding:8px;margin:4px 0 10px;border-radius:8px;font:inherit;background:var(--bg);color:var(--tx)}li{margin-bottom:8px;font-size:14px}h2{margin:4px 0}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud"><span id="sc">⭐ 0</span><span id="lv"></span><span id="pg">0/8</span><span class="sp"></span><button id="b1" title="Bantuan">❓</button><button id="b2" title="Kamus Istilah">📖</button><button id="b3" title="Mode Menu Cepat">☰</button><button id="b4" title="Jeda">⏸</button><button id="b5" title="Hasil / lanjutkan kuis">📊</button></div>
+<button id="act"></button><div id="joy"><i></i></div><div id="ts"></div><div id="ov"></div><div id="pop"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== BANK SOAL (guru boleh menambah/mengubah) =====
+ M(stasiun,pertanyaan,[JAWABAN BENAR,salah1,salah2,salah3],petunjuk,pembahasan,[warna])  → opsi diacak otomatis
+ T(stasiun,pertanyaan,benar?,petunjuk,pembahasan) → benar/salah
+ K(stasiun,'P'|'U',pertanyaan,kunciKlik,petunjuk,pembahasan) → klik pada gambar (P=poster, U=layar CorelDRAW generik)
+ O(stasiun,pertanyaan,[langkah urut benar],petunjuk,pembahasan) → mengurutkan
+ Stasiun 0-3 = Materi A, 4-7 = Materi B, 8 = tambahan B, 9 = tambahan A (hanya Ujian Akhir) */
+const M=(s,q,o,h,e,c)=>({s,q,o,a:o[0],h,e,c}),T=(s,q,v,h,e)=>({s,q,o:['Benar','Salah'],a:v?'Benar':'Salah',h,e,t:'tf'}),
+K=(s,sc,q,k,h,e)=>({s,q,t:'c',sc,a:k,h,e}),O=(s,q,o,h,e)=>({s,q,t:'o',o,h,e});
+const B=[
+K(0,'P','Klik GARIS LENGKUNG pada poster.','wave','Cari garis yang melengkung seperti ombak.','Garis lengkung memberi kesan lembut dan dinamis.'),
+K(0,'P','Klik RUANG NEGATIF (area kosong yang sengaja dibiarkan).','neg','Cari bagian tanpa objek.','Ruang negatif adalah area kosong di sekitar objek utama yang membuat desain lega.'),
+K(0,'P','Klik BENTUK ORGANIK.','org','Organik = tidak beraturan, seperti daun.','Bentuk organik berkontur bebas; geometris memakai rumus (lingkaran, persegi).'),
+K(0,'P','Klik GARIS PUTUS-PUTUS.','dash','Garis yang terpotong-potong.','Garis putus-putus sering dipakai sebagai petunjuk atau lipatan.'),
+K(0,'P','Klik BENTUK GEOMETRIS.','geo','Bentuk yang rapi dan teratur.','Lingkaran adalah bentuk geometris.'),
+M(1,'Poster diskon makanan memakai merah, oranye, kuning. Apa suasana dan jenis warnanya?',['Hangat: energik dan menggugah selera','Dingin: tenang dan sejuk','Netral: kaku dan formal','Dingin: elegan dan misterius'],'Warna dekat api dan matahari.','Merah-oranye-kuning adalah warna hangat yang berenergi dan cocok untuk makanan.',['#e53935','#fb8c00','#fdd835']),
+T(1,'Merah, kuning, dan biru adalah warna primer pada roda warna pigmen tradisional.',1,'Primer = tidak bisa dibuat dari campuran warna lain.','Benar. Warna sekunder lahir dari campuran dua primer.'),
+M(1,'Warna sekunder oranye dihasilkan dari campuran...',['Merah + kuning','Merah + biru','Biru + kuning','Merah + hijau'],'Warna api.','Merah + kuning = oranye; merah + biru = ungu; biru + kuning = hijau.'),
+M(1,'Menurunkan saturasi sebuah warna membuatnya...',['Lebih pudar, mendekati abu-abu','Lebih pekat','Berganti hue','Lebih hangat'],'Saturasi = kepekatan.','Saturasi rendah = pudar/kusam; saturasi tinggi = pekat dan cerah.'),
+M(1,'Teks kuning muda di atas latar putih sulit dibaca. Masalahnya adalah...',['Kontras value terlalu rendah','Hue terlalu dingin','Tekstur terlalu kasar','Ruang negatif terlalu sedikit'],'Kedua warna sama-sama terang.','Perbedaan gelap-terang (value) yang kecil membuat teks tenggelam.',['#fff59d','#ffffff']),
+M(2,'Undangan pernikahan yang elegan paling cocok memakai huruf...',['Script (huruf sambung)','Display bergaya grafiti','Sans-serif sangat tebal','Huruf blok kapital'],'Mirip tulisan tangan indah.','Script memberi kesan anggun dan personal.'),
+M(2,'Poster konser rock butuh judul mencolok dan berkarakter. Pilihan terbaik...',['Display','Script tipis','Serif untuk paragraf','Sans-serif ukuran kecil'],'Huruf dekoratif untuk judul.','Display dirancang untuk judul besar yang unik.'),
+M(2,'Papan peringatan bahaya harus terbaca dari jauh. Huruf yang tepat...',['Sans-serif tebal, kapital, kontras tinggi','Script berhias','Display dekoratif tipis','Serif miring tipis'],'Utamakan keterbacaan.','Sans-serif tebal berkontras tinggi paling jelas dari jarak jauh.'),
+M(2,'Ciri utama huruf serif adalah...',['Ada kaki/sirip kecil di ujung huruf','Tanpa kaki di ujung huruf','Bersambung seperti tulisan tangan','Hanya berupa huruf kapital'],'Serif = berkaki.','Sans-serif berarti tanpa serif.'),
+T(2,'Buku cetak dengan paragraf panjang nyaman dibaca memakai huruf script berukuran kecil.',0,'Pikirkan mata yang lelah.','Salah. Script sulit dibaca untuk teks panjang; pakai serif atau sans-serif.'),
+M(3,'Poster A: kontras jelas, hierarki rapi, ruang negatif cukup. Poster B: teks kecil, 6 jenis huruf, penuh sesak. Mana lebih baik dan mengapa?',['A, karena hierarki dan kontras jelas serta ruang negatif cukup','B, karena semua ruang terisi','B, karena memakai banyak jenis huruf','A, karena posternya lebih kecil'],'Alasan harus berkaitan dengan unsur desain.','Desain baik mengarahkan mata lewat hierarki dan memberi ruang bernapas.'),
+M(3,'Logo A sederhana 2 warna. Logo B penuh gradasi halus yang hilang saat diperkecil jadi stempel. Untuk logo UMKM, pilih...',['A, karena tetap terbaca saat diperkecil','B, karena rumit berarti profesional','B, karena gradasi selalu lebih bagus','Keduanya sama saja'],'Logo dipakai di banyak ukuran.','Logo yang baik sederhana, mudah diingat, dan fleksibel.'),
+M(3,'Brosur B tata letaknya acak tanpa margin, sedangkan brosur A sejajar rapi. Prinsip yang dilanggar B...',['Keseimbangan dan keteraturan (alignment)','Penggunaan warna primer','Ukuran kertas','Format file'],'Pikirkan kerapian posisi elemen.','Elemen perlu sejajar agar desain terasa teratur.'),
+M(3,'Spanduk bertulisan putih di atas foto terang sulit dibaca. Perbaikan terbaik...',['Beri overlay gelap atau ganti warna teks agar kontras','Perkecil teks','Tambah efek bayangan warna-warni','Ubah semua jadi huruf script'],'Naikkan kontras.','Overlay atau perubahan warna teks menaikkan kontras value.'),
+T(3,'Ruang negatif yang cukup memfokuskan perhatian pada objek utama.',1,'Ingat fungsi ruang kosong.','Benar. Ruang negatif memberi jeda visual.'),
+K(4,'U','Mana TOOLBOX?','tool','Kotak ikon alat di sisi kiri.','Toolbox berisi tool seperti Pick, Shape, Rectangle, Ellipse.'),
+K(4,'U','Di mana kamu mengubah warna isi objek dengan sekali klik?','pal','Deretan kotak warna.','Color Palette: klik kiri untuk warna isi, klik kanan untuk outline.'),
+K(4,'U','Klik PROPERTY BAR (ukuran, posisi, rotasi objek terpilih).','prop','Bar di bawah menu.','Property Bar berubah mengikuti tool/objek yang aktif.'),
+K(4,'U','Klik DRAWING PAGE (halaman putih area cetak).','page','Kertas putih di tengah.','Drawing Page adalah halaman kerja yang akan dicetak.'),
+K(4,'U','Klik STATUS BAR (info objek terpilih).','stat','Bar paling bawah.','Status Bar menampilkan informasi objek dan tool aktif.'),
+M(5,'Menggambar lingkaran sempurna dengan Ellipse Tool: tahan tombol apa saat menyeret?',['Ctrl','Alt','Tab','Delete'],'Tombol pembatas proporsi.','Ctrl membatasi proporsi 1:1 sehingga elips menjadi lingkaran.'),
+M(5,'Mengubah titik sudut (node) pada kurva. Tool yang dipakai...',['Shape Tool','Pick Tool','Rectangle Tool','Eyedropper Tool'],'Tool untuk mengedit node.','Shape Tool mengedit node dan segmen kurva.'),
+M(5,'Menulis teks mengikuti lengkung lingkaran logo. Fitur yang dipakai...',['Text Tool + Fit Text to Path','Drop Shadow','Weld','Contour'],'Teks diarahkan mengikuti jalur.','Fit Text to Path menempelkan teks pada kurva.'),
+M(5,'Mengambil warna dari objek lain tanpa memilih manual. Tool...',['Eyedropper Tool','Pick Tool','Polygon Tool','Freehand Tool'],'Seperti pipet.','Eyedropper menyalin warna dari objek.'),
+M(5,'Membuat logo dengan garis dan kurva presisi berbasis titik kendali (node). Tool paling tepat...',['Pen/Bezier Tool','Freehand Tool','Rectangle Tool','Polygon Tool'],'Presisi, bukan coretan tangan.','Pen/Bezier menghasilkan kurva terkontrol; Freehand mengikuti gerakan tangan.'),
+M(6,'Dua lingkaran digabung jadi satu bentuk utuh dengan satu garis tepi luar. Operasi...',['Weld','Trim','Intersect','Combine'],'Menyatukan area jadi satu.','Weld melebur objek menjadi satu bentuk.'),
+M(6,'Hanya area yang tumpang tindih dua bentuk ingin dijadikan objek baru. Operasi...',['Intersect','Weld','Trim','Break Apart'],'Ambil irisannya.','Intersect membuat objek dari area irisan.'),
+M(6,'Bentuk bawah dipotong mengikuti bentuk di atasnya (area tumpang tindih hilang dari bentuk bawah). Operasi...',['Trim','Weld','Group','Mirror'],'Memangkas.','Trim memotong objek bawah memakai bentuk objek atas.'),
+M(6,'Group (Ctrl+G) berfungsi untuk...',['Menyatukan beberapa objek agar bergerak bersama tanpa menggabung kurvanya','Menghapus objek','Mengubah teks menjadi kurva','Mengubah mode warna'],'Dikelompokkan, bukan dilebur.','Group menjaga objek tetap terpisah tetapi dapat dipindah bersama.'),
+M(6,'Merapikan beberapa objek agar tengahnya sejajar dan jaraknya sama. Fitur...',['Align and Distribute','Skew','Blend','Contour'],'Sejajar dan merata.','Align and Distribute menata posisi dan jarak antarobjek.'),
+M(7,'Klien butuh spanduk 3x1 m untuk dicetak. Format dan mode warna yang tepat...',['Vektor (CDR/PDF) dengan mode CMYK','JPG kecil dengan RGB','GIF dengan RGB','PNG 72 dpi, RGB'],'Cetak dan layar memakai mode warna berbeda.','Vektor tetap tajam di ukuran besar; CMYK untuk cetak.'),
+M(7,'Foto produk untuk ditampilkan di website, file harus ringan. Pilihan...',['JPG, mode RGB','CDR, mode CMYK','PDF cetak, mode CMYK','TIFF mentah'],'Layar memakai RGB.','JPG ringan dan RGB sesuai tampilan layar.'),
+M(7,'Logo bertransparan untuk ditempel pada slide berbagai warna. Format...',['PNG (mendukung transparansi)','JPG','BMP','PDF dengan latar putih'],'Format bitmap yang bisa tembus pandang.','PNG menyimpan saluran transparansi; JPG tidak.'),
+T(7,'File .CDR adalah format asli CorelDRAW yang dapat diedit kembali.',1,'Format asli aplikasi.','Benar. Simpan .CDR sebagai master file.'),
+O(7,'Urutkan langkah membuat logo sederhana.',['Buat dokumen baru (ukuran, satuan, mode warna)','Gambar bentuk dasar dengan Ellipse/Rectangle','Gabungkan atau potong bentuk (Weld/Trim)','Beri warna isi dan tambahkan teks','Simpan (Ctrl+S) lalu ekspor sesuai kebutuhan'],'Mulai dari kanvas, akhiri dengan ekspor.','Urutan kerja: dokumen, bentuk, operasi, warna dan teks, simpan dan ekspor.'),
+/* tambahan khusus Ujian Akhir */
+M(9,'Foto kulit kayu pada poster tampak kasar, tetapi permukaan kertasnya licin. Ini contoh tekstur...',['Semu (visual)','Nyata (taktil)','Primer','Negatif'],'Dirasakan mata, bukan tangan.','Tekstur semu hanya terlihat; nyata dapat diraba.'),
+M(9,'Gelap-terang (value) dipakai untuk menciptakan...',['Kesan kedalaman, volume, dan kontras','Jenis huruf','Format file','Ukuran halaman'],'Efek 3D pada gambar datar.','Value membentuk volume dan memisahkan objek dari latar.'),
+M(9,'Pada logo, jarak kosong di sekitar dan antar huruf yang sengaja dibiarkan disebut...',['Ruang negatif','Ruang positif','Hue','Titik fokus'],'Area tanpa objek.','Ruang negatif memberi napas pada desain.'),
+M(8,'Artistic Text dan Paragraph Text. Penggunaan yang tepat...',['Artistic untuk judul atau logo pendek; Paragraph untuk blok teks panjang','Artistic untuk teks panjang; Paragraph untuk logo','Keduanya sama','Paragraph hanya untuk angka'],'Satu baris vs satu blok.','Paragraph Text punya bingkai teks untuk isi panjang seperti brosur.'),
+M(8,'Teks logo dikonversi ke Convert to Curves agar...',['Bentuk huruf tetap sama walau font tidak terpasang di komputer lain','Teks menjadi bitmap','File selalu lebih kecil','Warna otomatis CMYK'],'Masalah font hilang.','Teks menjadi objek kurva sehingga tidak bergantung pada font.'),
+M(8,'Efek Drop Shadow berfungsi untuk...',['Memberi bayangan agar objek tampak timbul','Memotong objek','Mengubah objek ke bitmap','Menggabungkan kurva'],'Bayangan.','Drop Shadow menambah kesan kedalaman.'),
+M(8,'Fountain Fill dipakai untuk...',['Isi warna bergradasi','Garis putus-putus','Memutar objek','Mengekspor PDF'],'Gradasi.','Fountain Fill = isi gradasi linier, radial, dan lainnya.'),
+M(8,'Transparency dipakai untuk...',['Membuat objek tembus pandang sebagian','Menggabungkan bentuk','Mengubah font','Menyimpan file'],'Tembus pandang.','Transparency mengatur seberapa tembus pandang isi objek.'),
+M(8,'Mirror horizontal pada objek membuatnya...',['Terbalik kiri-kanan','Mengecil','Pindah halaman','Berganti warna'],'Seperti bercermin.','Mirror membalik objek secara horizontal atau vertikal.'),
+M(8,'Pintasan keyboard untuk Duplicate objek...',['Ctrl+D','Ctrl+G','Ctrl+Z','Ctrl+S'],'D = duplicate.','Ctrl+D menggandakan objek; Ctrl+G group; Ctrl+Z undo; Ctrl+S simpan.'),
+M(8,'Kamu tak sengaja menghapus objek. Pintasan untuk membatalkan langkah...',['Ctrl+Z','Ctrl+S','Ctrl+G','F4'],'Undo.','Ctrl+Z membatalkan aksi terakhir.'),
+T(8,'Gambar vektor tetap tajam saat diperbesar, sedangkan bitmap (JPG/PNG) akan pecah.',1,'Vektor = rumus matematika.','Benar. Vektor skalabel; bitmap terdiri dari piksel.')];
+const CS=[M(8,'Studi kasus: Klien ingin logo yang tetap tajam saat diperbesar menjadi baliho. Langkah dan format apa yang kamu pilih?',['Gambar sebagai objek vektor, simpan .CDR dan ekspor PDF/SVG','Ambil dari foto lalu simpan JPG','Buat bitmap kecil lalu perbesar saat cetak','Screenshot logo lalu simpan PNG'],'Pilih jenis gambar yang tidak bergantung piksel.','Vektor tetap tajam di ukuran berapa pun.'),
+M(8,'Studi kasus: Logo UMKM kue memakai font khusus yang tidak ada di komputer percetakan. Langkah paling aman sebelum file dikirim?',['Convert to Curves pada teks lalu simpan','Kirim apa adanya','Ubah semua teks jadi JPG kecil','Hapus teksnya'],'Samakan tampilan di semua komputer.','Convert to Curves mengunci bentuk huruf.'),
+M(8,'Studi kasus: Judul poster sekolah menyatu dengan foto latar ramai. Perbaikan yang tepat?',['Beri bidang berwarna Transparency di belakang judul dan naikkan kontras teks','Tambah 5 jenis huruf lain','Perkecil judul','Hapus semua ruang kosong'],'Naikkan kontras dan pisahkan teks dari latar.','Bidang transparan memisahkan teks dari foto sehingga mudah dibaca.')];
+CS.forEach(q=>q.cs=1);
+const MX={s:8,t:'x',cs:0,q:'Jodohkan istilah dengan fungsinya.',o:[['Weld','Menggabungkan bentuk menjadi satu'],['Trim','Memotong bentuk bawah dengan bentuk atas'],['Intersect','Mengambil area tumpang tindih'],['Fit Text to Path','Membuat teks mengikuti lengkung']],h:'Ingat hasil tiap operasi.',e:'Weld = gabung, Trim = potong, Intersect = irisan, Fit Text to Path = teks mengikuti kurva.'};
+const NM=['Pemburu Unsur','Detektif Warna','Bengkel Tipografi','Kritikus Desain','Kenali Antarmuka','Pilih Tool yang Tepat','Operasi Objek','Ekspor & Format'];
+const BD=['🔍','🎨','🔤','🧐','🖥️','🛠️','✂️','📤'];
+const DICT=[['hue','Hue','Jenis warna murni (merah, biru, dll.)'],['saturasi','Saturasi','Tingkat kepekatan warna'],['value','Value','Gelap-terang suatu warna'],['serif','Serif','Huruf berkaki/sirip di ujung'],['sans-serif','Sans-serif','Huruf tanpa kaki'],['script','Script','Huruf bergaya tulisan tangan'],['ruang negatif','Ruang negatif','Area kosong di sekitar objek utama'],['toolbox','Toolbox','Kotak alat berisi tool'],['property bar','Property Bar','Bar pengaturan sesuai objek/tool'],['color palette','Color Palette','Deretan warna siap pakai'],['pick tool','Pick Tool','Memilih dan memindah objek'],['shape tool','Shape Tool','Mengedit node kurva'],['eyedropper','Eyedropper','Mengambil warna'],['weld','Weld','Menggabungkan jadi satu bentuk'],['trim','Trim','Memotong bentuk bawah'],['intersect','Intersect','Membuat objek dari irisan'],['combine','Combine','Menggabung kurva, area tumpang tindih jadi lubang'],['curves','Convert to Curves','Mengubah teks menjadi kurva'],['drop shadow','Drop Shadow','Efek bayangan'],['fountain fill','Fountain Fill','Isi gradasi'],['transparency','Transparency','Efek tembus pandang'],['vektor','Vektor','Gambar dari rumus, tajam di ukuran apa pun'],['bitmap','Bitmap','Gambar dari piksel'],['cmyk','CMYK','Mode warna untuk cetak'],['rgb','RGB','Mode warna untuk layar']];
+/* ===== SCENE SVG untuk soal klik ===== */
+const SC={P:`<svg viewBox="0 0 300 190" onclick="clk(event)"><rect width="300" height="190" fill="#fff7e6"/><path data-k="wave" d="M15 40Q45 5 75 40T135 40" fill="none" stroke="#e91e63" stroke-width="7" stroke-linecap="round"/><line data-k="lurus" x1="15" y1="72" x2="135" y2="72" stroke="#333" stroke-width="6"/><line data-k="dash" x1="15" y1="98" x2="135" y2="98" stroke="#1565c0" stroke-width="6" stroke-dasharray="12 8"/><g data-k="titik" fill="#6a1b9a"><circle cx="25" cy="130" r="5"/><circle cx="50" cy="140" r="5"/><circle cx="75" cy="128" r="5"/><circle cx="100" cy="142" r="5"/></g><circle data-k="geo" cx="195" cy="50" r="30" fill="#ff9800"/><path data-k="org" d="M165 115C145 145 190 178 228 152C262 132 238 95 205 102Z" fill="#43a047"/><rect data-k="neg" x="250" y="20" width="42" height="150" fill="#fff7e6"/></svg>`,
+U:`<svg viewBox="0 0 300 190" onclick="clk(event)"><rect width="300" height="190" fill="#8a93a6"/><rect data-k="menu" width="300" height="12" fill="#2b2f3a"/><rect data-k="prop" y="12" width="300" height="16" fill="#454c5e"/><rect data-k="ruler" x="26" y="28" width="224" height="8" fill="#cfd4de"/><rect data-k="ruler" x="18" y="36" width="8" height="132" fill="#cfd4de"/><g data-k="tool"><rect y="28" width="18" height="140" fill="#2b2f3a"/><rect x="4" y="34" width="10" height="10" fill="#1db954"/><rect x="4" y="50" width="10" height="10" fill="#aaa"/><rect x="4" y="66" width="10" height="10" fill="#aaa"/><rect x="4" y="82" width="10" height="10" fill="#aaa"/></g><rect data-k="page" x="70" y="50" width="136" height="104" fill="#fff"/><rect data-k="dock" x="250" y="28" width="50" height="140" fill="#3a4050"/><g data-k="pal"><rect x="18" y="168" width="232" height="12" fill="#222"/><rect x="22" y="170" width="18" height="8" fill="#e53935"/><rect x="42" y="170" width="18" height="8" fill="#fb8c00"/><rect x="62" y="170" width="18" height="8" fill="#fdd835"/><rect x="82" y="170" width="18" height="8" fill="#43a047"/><rect x="102" y="170" width="18" height="8" fill="#1e88e5"/><rect x="122" y="170" width="18" height="8" fill="#8e24aa"/></g><rect data-k="stat" y="180" width="300" height="10" fill="#2b2f3a"/><g font-size="8" fill="#fff"><text x="4" y="9">Berkas Edit Tampilan Objek</text><text x="254" y="40">Docker</text><text x="76" y="64" fill="#999">Halaman</text><text x="4" y="188">Objek terpilih</text></g></svg>`};
+/* ===== STATE ===== */
+const $=s=>document.querySelector(s),sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let S,Q={},tm,ps=0,busy=1,REL=true,cur=null,PL={name:'',kelas:'',id:''};
+const ar=q=>(q.s<4||q.s==9)?'A':'B',nd=()=>S.done.filter(Boolean).length;
+function reset(){Q={};S={score:0,combo:0,lives:3,done:Array(8).fill(0),stars:Array(8).fill(0),wr:[],ar:{A:[0,0],B:[0,0]},seen:'',lg:[]};PL.id='';tg.forEach(t=>{if(t.ic){t.ic.material.color.set(t.col);t.p.material.color.set(0x37474f)}});upd()}
+const SK='cdr_arena_v1';
+function sv(){try{localStorage.setItem(SK,JSON.stringify({S,Q:{...Q,cur:0},REL,PL}))}catch(e){}}
+function ld(){try{const d=JSON.parse(localStorage.getItem(SK)||'null');if(d&&d.S&&d.S.done){S=d.S;Q=d.Q||{};REL=d.REL!==false;PL=d.PL||PL;S.done.forEach((x,i)=>x&&paint(i));return 1}}catch(e){}return 0}
+function upd(){sv();$('#sc').textContent='⭐ '+S.score+(S.combo>1?' · x'+S.combo:'');$('#pg').textContent='Stasiun '+nd()+'/8';$('#lv').textContent=Q.boss?'❤️'.repeat(Math.max(S.lives,0)):''}
+const bz=()=>{busy=$('#ov').style.display=='flex'||$('#pop').style.display=='flex'};
+function ov(h){sv();$('#ov').innerHTML='<div class="pn">'+h+'</div>';$('#ov').style.display='flex';bz()}
+function cl(){clearInterval(tm);$('#ov').style.display='none';bz()}
+function pop(h){$('#pop').innerHTML='<div class="pn">'+h+'<button class="bt" onclick="xp()">Tutup</button></div>';$('#pop').style.display='flex';ps=1;bz()}
+function xp(){$('#pop').style.display='none';ps=0;bz()}
+function toast(t){const e=$('#ts');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2600)}
+function burst(ok){for(let i=0;i<10;i++){const s=document.createElement('b');s.textContent=ok?'✨':'💥';s.className='pt';s.style.cssText=`left:${40+Math.random()*20}%;top:50%;--dx:${(Math.random()-.5)*300}px;--dy:${-80-Math.random()*150}px`;document.body.appendChild(s);setTimeout(()=>s.remove(),900)}}
+/* ===== MENU & BANTUAN ===== */
+function cont(){cl();if(Q.active)rsm();else if(S.fin&&S.last)ov(S.last);else start()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IS='width:100%;box-sizing:border-box;padding:12px;margin:5px 0;border-radius:10px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);font:700 15px Nunito,system-ui,sans-serif';
+/* ===== KIRIM HASIL KE GURU (Cloudflare Pages Function /api/submit) ===== */
+function mkid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function pay(){if(!PL.id)PL.id=mkid();return{id:PL.id,nama:PL.name,kelas:PL.kelas,waktu:Date.now(),skor:S.score,stasiun:nd(),bintang:S.stars,A:S.ar.A,B:S.ar.B,selesai:!!S.fin,nyawa:S.lives,log:S.lg||[]}}
+async function snd0(){clearTimeout(snd.r);let c=0;try{const r=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(pay()),keepalive:true});c=r.status;S.sent=r.ok}catch(e){S.sent=0}
+if(!S.sent){snd.n=(snd.n||0)+1;snd.r=setTimeout(snd0,Math.min(30000,3000*snd.n))}else snd.n=0;
+const e=$('#sd');if(e)e.textContent=S.sent?'✅ Hasil terkirim ke guru':'⚠️ Hasil belum terkirim'+(c?' (kode '+c+')':'')+'. Mencoba lagi otomatis, jangan tutup halaman…'}
+function snd(){clearTimeout(snd.t);snd.t=setTimeout(snd0,1200)}
+function dl(){const b=new Blob([JSON.stringify(pay(),null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='hasil-'+(PL.name||'siswa').replace(/\W+/g,'_')+'.json';a.click()}
+function fresh(){PL.name='';PL.kelas='';reset();menu()}
+function menu(){ov(`<h2>🎨 CorelDRAW Arena 3D</h2><p><b>Misi Desainer Muda</b> · Kelas XI<br>Materi: Unsur Desain Grafis dan Dasar CorelDRAW</p>${Q.active||nd()>0||S.fin?'<p>👤 <b>'+esc(PL.name)+'</b> '+esc(PL.kelas)+'</p>':'<input id="nm" placeholder="Nama lengkap" maxlength="40" value="'+esc(PL.name)+'" style="'+IS+'"><input id="kl" placeholder="Kelas (mis. XI-2)" maxlength="20" value="'+esc(PL.kelas)+'" style="'+IS+'">'}</p>${Q.active||nd()>0||S.fin?'<button class="bt" onclick="cont()">▶ Lanjutkan progres ('+nd()+'/8 stasiun)</button><button class="op" onclick="fresh()">↺ Mulai dari awal</button>':'<button class="bt" onclick="start()">▶ Mulai</button>'}<button class="op" onclick="how()">📘 Cara Bermain</button><button class="op" onclick="tuj()">🎯 Tujuan Pembelajaran</button><button class="op" onclick="qm()">☰ Mode Menu Cepat</button><label><input type="checkbox" ${REL?'checked':''} onchange="REL=this.checked"> Mode santai (tanpa timer di Ujian Akhir)</label>`)}
+const how=()=>pop('<h2>Cara Bermain</h2><p>Jalan di studio dengan <b>WASD/panah</b> dan seret mouse untuk melihat (HP: joystick + geser layar). Dekati stasiun lalu tekan <b>E</b> atau ketuk tombol Mulai. Lantai 1 (kiri) = Unsur Desain, Lantai 2 (kanan) = CorelDRAW. Selesaikan 8 stasiun untuk membuka pintu Ruang Ujian Akhir. Jawaban salah memberi petunjuk, percobaan kedua membuka jawaban. Di Ujian Akhir kamu punya 3 nyawa.</p>');
+const tuj=()=>pop('<h2>Tujuan Pembelajaran</h2><ol><li>Mengidentifikasi dan menganalisis unsur-unsur desain pada sebuah karya</li><li>Menyebutkan bagian antarmuka dan fungsi tool dasar CorelDRAW</li><li>Memilih tool dan operasi objek yang tepat untuk membuat bentuk tertentu</li><li>Menentukan format file dan mode warna sesuai kebutuhan cetak atau digital</li><li>Menerapkan pengetahuan unsur desain dan CorelDRAW untuk menyelesaikan kasus desain sederhana</li></ol>');
+function dict(){const o=DICT.filter(d=>S.seen.includes(d[0]));pop('<h2>📖 Kamus Istilah</h2><p>'+o.length+' dari '+DICT.length+' istilah terbuka.</p>'+(o.map(d=>`<p><b>${d[1]}</b>: ${d[2]}</p>`).join('')||'<p>Mainkan stasiun untuk membuka istilah.</p>'))}
+function qm(){pop('<h2>☰ Menu Cepat</h2>'+NM.map((n,i)=>`<button class="op" onclick="xp();go(${i})">${S.done[i]?'✅':BD[i]} ${i+1}. ${n} ${'⭐'.repeat(S.stars[i])}</button>`).join('')+`<button class="op" onclick="xp();go(8)">🏆 Ruang Ujian Akhir ${nd()<8?'(buka setelah 8 stasiun)':''}</button>`)}
+function go(i){const nm=$('#nm');if(nm&&nm.value.trim()){PL.name=nm.value.trim().slice(0,40);PL.kelas=($('#kl')||{value:''}).value.trim().slice(0,20)}if(!PL.name){xp();menu();return toast('Isi nama dulu ya.')}if(!PL.id)PL.id=mkid();if(Q.active){toast('Selesaikan kuis yang sedang berjalan dulu.');return rsm()}if(i==8){if(nd()<8)return toast('Selesaikan 8 stasiun dulu ('+nd()+'/8)');return boss()}cl();run(sh(B.filter(q=>q.s==i)).slice(0,3),i)}
+function start(){const n=$('#nm');if(n){PL.name=n.value.trim().slice(0,40);PL.kelas=($('#kl').value||'').trim().slice(0,20)}if(!PL.name)return toast('Isi nama dulu ya.');if(!PL.id)PL.id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);cl();toast('Dekati pedestal stasiun, lalu tekan E atau ketuk tombol.')}
+/* ===== MESIN KUIS ===== */
+function run(list,id){clearTimeout(nxt.t);Q={list,id,i:0,ok:0,boss:id==8,active:1};if(Q.boss)S.lives=3;S.combo=0;upd();ask()}
+function boss(){cl();const p=sh(B.filter(q=>!q.t||q.t=='tf')).slice(0,11),l=sh([...p,...CS]);l.splice(Math.random()*15|0,0,MX);run(l,8)}
+function rsm(){if(Q.done)nx();else ask(1)}
+function ask(k){clearInterval(tm);if(Q.i>=Q.list.length)return fin();const q=Q.cur=Q.list[Q.i];if(!k)Q.tr=0;Q.done=0;S.seen+=' '+(q.q+' '+JSON.stringify(q.o||'')).toLowerCase();let b='';
+if(q.t=='c')b=SC[q.sc];else if(q.t=='o'){Q.pk=[];Q.pool=sh(q.o);b='<div class="pk" id="pk"></div><div id="pl"></div><button class="op" onclick="rstO()">↺ Ulangi urutan</button>'}
+else if(q.t=='x'){Q.dd=sh(q.o.map(x=>x[1]));b=q.o.map((x,i)=>`<b>${x[0]}</b><select id="s${i}"><option value="">Pilih fungsi…</option>${Q.dd.map(d=>`<option>${d}</option>`).join('')}</select>`).join('')+'<button class="bt" onclick="chkX()">Periksa</button>'}
+else{Q.ops=q.t=='tf'?q.o:sh(q.o);b=Q.ops.map((t,i)=>`<button class="op" id="o${i}" onclick="ans(${i})">${t}</button>`).join('')}
+ov(`<div class="hd"><span>${Q.boss?'🏆 Ujian Akhir':NM[Q.id]} · ${Q.i+1}/${Q.list.length}${q.cs?' · Studi Kasus':''}</span><span id="tl"></span></div><div class="bar"><b style="width:${Q.i/Q.list.length*100}%"></b></div><div class="q">${q.q}</div>${q.c?'<p class="sw">'+q.c.map(c=>`<i style="background:${c}"></i>`).join('')+'</p>':''}${b}<div id="fb"></div><div id="nx"></div>`);
+if(q.t=='o')rO();
+if(Q.boss&&!REL){Q.tl=25;$('#tl').textContent='⏱ 25';tm=setInterval(()=>{if(ps||Q.done)return;Q.tl--;$('#tl').textContent='⏱ '+Q.tl;if(Q.tl<=0){clearInterval(tm);Q.tr=1;res(0)}},1000)}}
+function fb(t,ok){$('#fb').className='f'+ok;$('#fb').innerHTML=t}
+function ans(i){if(Q.done)return;const ok=Q.ops[i]==Q.cur.a;if(!ok)$('#o'+i).classList.add('no');res(ok)}
+function clk(e){if(Q.done)return;const t=e.target.closest('[data-k]');res(t&&t.dataset.k==Q.cur.a)}
+function rO(){$('#pk').innerHTML=Q.pk.map((i,n)=>`<div>${n+1}. ${Q.pool[i]}</div>`).join('')||'<i>Ketuk langkah sesuai urutan…</i>';$('#pl').innerHTML=Q.pool.map((t,i)=>Q.pk.includes(i)?'':`<button class="op" onclick="pO(${i})">${t}</button>`).join('')}
+function pO(i){if(Q.done)return;Q.pk.push(i);rO();if(Q.pk.length==Q.pool.length)res(Q.pk.every((x,n)=>Q.pool[x]==Q.cur.o[n]))}
+function rstO(){if(!Q.done){Q.pk=[];rO()}}
+function chkX(){if(Q.done)return;res(Q.cur.o.every((x,i)=>$('#s'+i).value==x[1]))}
+function stat(f){const a=S.ar[ar(Q.cur)];a[1]++;if(f)a[0]++;(S.lg=S.lg||[]).push({s:Q.cur.s,q:Q.cur.q.slice(0,140),ok:f?1:0,tr:Q.tr});snd()}
+function res(ok){if(Q.done)return;const q=Q.cur;
+if(ok){Q.done=1;const f=!Q.tr;S.combo++;const p=(f?100:50)+Math.min(S.combo,5)*10;S.score+=p;if(f)Q.ok++;stat(f);burst(1);fb(`✅ Benar! +${p} poin${S.combo>1?' · Kombo x'+S.combo:''}<br>${q.e}`,1);nxt()}
+else{S.combo=0;Q.tr++;burst(0);if(Q.boss)S.lives--;
+ if(Q.tr<2&&!(Q.boss&&S.lives<1)){fb('❌ Belum tepat. Petunjuk: '+q.h,0)}
+ else{Q.done=1;stat(0);S.wr.push(q);const a=q.t=='o'?q.o.join(' → '):q.t=='c'||q.t=='x'?'':q.a;if(q.t!='c'&&q.t!='o'&&q.t!='x')document.querySelectorAll('.op').forEach((b,i)=>{if(Q.ops[i]==q.a)b.classList.add('ok')});fb('❌ '+(a?'Jawaban benar: <b>'+a+'</b><br>':'')+q.e,0);nxt()}}
+upd()}
+function nxt(){clearInterval(tm);const last=Q.i>=Q.list.length-1||(Q.boss&&S.lives<1);$('#nx').innerHTML=`<button class="bt" onclick="nx()">${last?'Lihat hasil':'Lanjut ▶'}</button>`+(last?'<p style="font-size:12px;opacity:.7">Hasil akan muncul otomatis beberapa detik lagi…</p>':'');if(last){clearTimeout(nxt.t);nxt.t=setTimeout(()=>{if(Q.active&&Q.done&&!ps)nx()},4500)}}
+function nx(){if(Q.boss&&S.lives<1)return fin();Q.i++;ask()}
+function fin(){clearInterval(tm);Q.active=0;if(Q.boss)return results();const st=Q.ok>=3?3:Q.ok==2?2:1;S.stars[Q.id]=Math.max(S.stars[Q.id],st);const first=!S.done[Q.id];S.done[Q.id]=1;S.score+=st*50;paint(Q.id);upd();snd();
+ov(`<h2>${BD[Q.id]} Stasiun selesai!</h2><p style="font-size:32px;margin:6px 0">${'⭐'.repeat(st)}${'☆'.repeat(3-st)}</p><p>Lencana <b>${NM[Q.id]}</b> diperoleh. Benar sekali coba: ${Q.ok}/3.</p>${nd()==8&&first?'<p><b>🎉 Semua lisensi terkumpul! Pintu Ruang Ujian Akhir terbuka.</b></p><button class="bt" onclick="boss()">🏆 Masuk Ujian Akhir</button>':''}<button class="${nd()==8&&first?'op':'bt'}" onclick="cl()">Kembali ke studio</button><button class="op" onclick="go(${Q.id})">↺ Ulangi stasiun (soal baru)</button>`)}
+function results(){S.fin=1;snd0();const a=S.ar.A,b=S.ar.B,pa=a[1]?Math.round(a[0]/a[1]*100):0,pb=b[1]?Math.round(b[0]/b[1]*100):0,n=a[1]+b[1],p=n?(a[0]+b[0])/n:0,rk=p>=.85?'Art Director':p>=.7?'Desainer Senior':p>=.5?'Desainer Junior':'Magang';
+const rec=[];if(pa<70)rec.push('Ulangi <b>Lantai 1</b> (Unsur Desain Grafis).');if(pb<70)rec.push('Ulangi <b>Lantai 2</b> (Dasar-dasar CorelDRAW).');
+const bar=(t,v)=>`<p style="margin:6px 0 2px">${t}: <b>${v}%</b></p><div class="bar"><b style="width:${v}%"></b></div>`;
+ov(S.last=`<h2>${S.lives<1?'Nyawa habis, tetap semangat!':'🎉 Ujian Akhir selesai!'}</h2><p style="font-size:20px">Peringkat: <b>${rk}</b> · Skor ${S.score}</p>${bar('Materi A: Unsur Desain',pa)}${bar('Materi B: CorelDRAW',pb)}<p><b>Rekomendasi:</b> ${rec.join(' ')||'Pertahankan! Kamu sudah menguasai kedua materi.'}</p><h3>Soal yang perlu dibahas (${S.wr.length})</h3><ol>${S.wr.map(q=>`<li><b>${q.q}</b><br>${q.t=='o'?'Urutan: '+q.o.join(' → ')+'<br>':q.t=='c'||q.t=='x'?'':'Jawaban: '+q.a+'<br>'}${q.e}</li>`).join('')||'<li>Tidak ada. Hebat!</li>'}</ol><p id="sd">⏳ Mengirim hasil ke guru…</p><button class="bt" onclick="reset();menu()">↺ Main lagi</button><button class="op" onclick="cl()">Tutup (buka lagi lewat tombol 📊)</button>`)}
+/* ===== DUNIA 3D ===== */
+let R,sc3,cam,tg=[],no3d=0,yaw=0,pit=0;
+function mkS(t,col){const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');g.fillStyle=col||'rgba(20,25,40,.88)';g.fillRect(0,0,512,128);g.fillStyle='#fff';g.font='bold 42px sans-serif';g.textAlign='center';g.fillText(t,256,80);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c)}));s.scale.set(4.4,1.1,1);return s}
+function bx(w,h,d,x,y,z,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c,flatShading:true}));m.position.set(x,y,z);sc3.add(m);return m}
+function paint(i){const t=tg[i];if(t&&t.ic){t.ic.material.color.set(0xffd54f);t.p.material.color.set(0x2e7d32)}}
+function init3d(){R=new THREE.WebGLRenderer({canvas:$('#c'),antialias:false});R.setPixelRatio(Math.min(devicePixelRatio||1,1.5));sc3=new THREE.Scene();sc3.background=new THREE.Color(0xe8f0ff);sc3.fog=new THREE.Fog(0xe8f0ff,18,50);
+cam=new THREE.PerspectiveCamera(70,1,.1,80);cam.position.set(0,1.6,6);cam.rotation.order='YXZ';
+sc3.add(new THREE.HemisphereLight(0xffffff,0x8899aa,.95));const d=new THREE.DirectionalLight(0xffffff,.5);d.position.set(5,10,5);sc3.add(d);
+bx(21,.2,22,-10.5,-.1,-2,0xfff1d6);bx(21,.2,22,10.5,-.1,-2,0x1f2d2b);bx(.3,.05,22,0,.02,-2,0xff7a3d);
+for(let k=0;k<5;k++)bx(.5,.04,22,6+k*4,.03,-2,0x1db954);
+[[0,-13,44,.4],[0,9,44,.4]].forEach(w=>bx(w[2],6,w[3],w[0],3,w[1],0xdfe7f5));[-21,21].forEach(x=>bx(.4,6,22,x,3,-2,0xdfe7f5));
+for(let k=0;k<9;k++){const x=-21.5+k*5.4;if(Math.abs(x)<3.2)continue;bx(2.4,.9,1.2,x,.45,-12,x<0?0xd7a86e:0x263238);bx(1,.7,.1,x,1.4,-12.2,0x111827)}
+bx(3,1.6,1.8,-19.5,.8,6,0xeceff1);bx(2.6,.3,1.4,-19.5,1.75,6,0x90a4ae);[0x00bcd4,0xe91e63,0xffeb3b,0x212121].forEach((c,i)=>bx(.8,1.6,.8,19.5,.8,3+i*1.1,c));
+NM.forEach((n,i)=>{const x=i<4?-18+i*5:3+(i-4)*5,col=i<4?[0xff5252,0xffb300,0x7c4dff,0x29b6f6][i]:0x1db954;
+const p=bx(0,0,0,0,0,0,0);sc3.remove(p);const pm=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.4,.9,8),new THREE.MeshLambertMaterial({color:0x37474f,flatShading:true}));pm.position.set(x,.45,-5);sc3.add(pm);
+const gs=[new THREE.IcosahedronGeometry(.6),new THREE.OctahedronGeometry(.7),new THREE.BoxGeometry(.9,.9,.9),new THREE.TetrahedronGeometry(.8)];
+const ic=new THREE.Mesh(gs[i%4],new THREE.MeshLambertMaterial({color:col,flatShading:true}));ic.position.set(x,2,-5);sc3.add(ic);const l=mkS((i+1)+'. '+n);l.position.set(x,3.3,-5);sc3.add(l);
+tg.push({x,z:-5,i,n,ic,p:pm,col})});
+const door=bx(4,4.2,.4,0,2.1,-12.6,0x546e7a);tg.push({x:0,z:-10.5,i:8,n:'Ruang Ujian Akhir',ic:null});
+const dl=mkS('🏆 RUANG UJIAN AKHIR','rgba(180,40,40,.9)');dl.position.set(0,4.8,-12);sc3.add(dl);
+[['LANTAI 1: GALERI UNSUR DESAIN',-12,'rgba(230,90,60,.9)'],['LANTAI 2: RUANG KERJA CORELDRAW',12,'rgba(26,158,75,.9)']].forEach(a=>{const s=mkS(a[0],a[2]);s.scale.set(7,1.75,1);s.position.set(a[1],5,-8);sc3.add(s)});
+tg[8].door=door;rs()}
+function rs(){if(no3d)return;R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+try{init3d()}catch(e){no3d=1;$('#c').style.display='none';$('#joy').style.display='none'}
+if(no3d||typeof THREE=='undefined'){no3d=1;tg=NM.map((n,i)=>({i,n}));tg.push({i:8})}
+addEventListener('resize',rs);
+/* ===== KONTROL ===== */
+const KY={};addEventListener('keydown',e=>{const k=e.key.toLowerCase();KY[k]=1;if(k=='e'&&!busy&&near)go(near.i)});addEventListener('keyup',e=>KY[e.key.toLowerCase()]=0);
+let drag=null,jx=0,jy=0,near=null;
+$('#c').addEventListener('pointerdown',e=>drag=[e.clientX,e.clientY]);addEventListener('pointerup',()=>drag=null);
+addEventListener('pointermove',e=>{if(!drag||busy)return;yaw-=(e.clientX-drag[0])*.005;pit=Math.max(-1,Math.min(1,pit-(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
+const J=$('#joy'),kn=J.firstChild,jm=e=>{const r=J.getBoundingClientRect();let x=(e.clientX-r.left-r.width/2)/(r.width/2),y=(e.clientY-r.top-r.height/2)/(r.height/2);const l=Math.hypot(x,y);if(l>1){x/=l;y/=l}jx=x;jy=-y;kn.style.transform=`translate(${x*35}px,${y*35}px)`};
+J.onpointerdown=e=>{J.setPointerCapture(e.pointerId);jm(e)};J.onpointermove=e=>{if(e.buttons)jm(e)};J.onpointerup=()=>{jx=jy=0;kn.style.transform=''};
+$('#b1').onclick=how;$('#b2').onclick=dict;$('#b3').onclick=qm;$('#b4').onclick=()=>pop('<h2>⏸ Jeda</h2><p>Permainan dijeda. Timer berhenti.</p>');
+$('#b5').onclick=()=>{if(Q.active)rsm();else if(S.last)ov(S.last);else toast('Belum ada hasil.')};$('#act').onclick=()=>near&&!busy&&go(near.i);
+let last=0;function loop(t){requestAnimationFrame(loop);const dt=Math.min((t-last)/1000,.05);last=t;if(no3d)return;
+if(!busy){const f=(KY.w||KY.arrowup?1:0)-(KY.s||KY.arrowdown?1:0)+jy,r=(KY.d||KY.arrowright?1:0)-(KY.a||KY.arrowleft?1:0)+jx;
+cam.position.x=Math.max(-20,Math.min(20,cam.position.x+(-Math.sin(yaw)*f+Math.cos(yaw)*r)*5*dt));cam.position.z=Math.max(-10,Math.min(8,cam.position.z+(-Math.cos(yaw)*f-Math.sin(yaw)*r)*5*dt))}
+cam.rotation.set(pit,yaw,0);near=null;let bd=3;tg.forEach(o=>{const d=Math.hypot(cam.position.x-o.x,cam.position.z-o.z);if(d<bd){bd=d;near=o}if(o.ic){o.ic.rotation.y+=dt;o.ic.position.y=2+Math.sin(t/500+o.i)*.15}});
+const a=$('#act');if(near&&!busy){a.style.display='block';a.textContent=near.i==8?(nd()<8?'🔒 Ujian Akhir ('+nd()+'/8)':'🏆 Masuk Ujian Akhir (E)'):'▶ '+(near.i+1)+'. '+near.n+' (E)'}else a.style.display='none';
+if(tg[8]&&tg[8].door)tg[8].door.material.color.set(nd()>=8?0x2e7d32:0x546e7a);R.render(sc3,cam)}
+if(!ld())reset();else{upd();if(PL.id&&(S.lg||[]).length)snd0()}addEventListener('online',()=>{if(PL.id)snd0()});requestAnimationFrame(loop);menu();if(no3d)toast('3D tidak tersedia di perangkat ini. Gunakan Mode Menu Cepat (☰).');
+</script></body></html>
